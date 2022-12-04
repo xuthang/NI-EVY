@@ -4,6 +4,10 @@
 auto getCompareFunction(const string &s)
 {
 	return [&](ll a, ll b) {
+		// FOR(i, 0, min(a, b))
+		// 	if(s[a+i] !=  s[b+i]) return s[a+i] < s[b+i];
+		// return a < b;
+		
 		return string_view(s.data() + a) < string_view(s.data() + b);
 	};
 }
@@ -11,8 +15,10 @@ auto getCompareFunction(const string &s)
 void printSA(const string &s, const vll &sortedIndexes)
 {
 	cout << "s = " << s << ", size = " << s.size() << endl;
+
 	cout << "Suffix Array " << endl;
-	for (auto i : sortedIndexes) cout << i << " " << s.substr(i) << endl;
+	FOR(i, 0, sortedIndexes.size())
+		cout << i << " " << sortedIndexes[i] << " " << s.substr(sortedIndexes[i]) << endl;
 }
 
 //-------------------------------------------------------------------
@@ -26,14 +32,8 @@ vll getSA(const string &s)
 	return suffixes;
 }
 
-void SAA()
+void SAA(const string & s)
 {
-	string s;
-	if(!(cin >> s))
-	{
-		cout << "expected input string" << endl;
-		exit(2);
-	}
 	auto v = getSA(s);
 	printSA(s, v);
 }
@@ -49,43 +49,62 @@ string lcp(const string & a, const string &b)
 	return ret;
 }
 
-void SASS()
+string lcp(const string &a, const string & b, int aStart, int bStart)
 {
-	string s, p;
-	if(!(cin >> s >> p))
-	{
-		cout << "expected input string" << endl;
-		exit(2);
-	}
+	string ret;
+	int aLen = a.size() - aStart, bLen = b.size() - bStart;
+	FOR(i, 0, min(aLen, bLen))
+		if(a[aStart + i] == b[bStart + i]) ret+=a[i];
+		else break;
+	return ret;
+}
+
+void SASS(const string & s, const string &p)
+{
 	auto SA = getSA(s);
 
-	const string &L = s, &x = p;
-	ll n = s.size(), m = x.size();
-	 
-	ll d = 0, f = SA.size();
-	ll res = d;
-	while(d < f)
+	ll lb = 0, ub = SA.size();
+	ll res = lb;
+	while(lb <= ub)
 	{
-		ll mid = (d+f)/2;
-
-		ll l = lcp(p, s.substr(SA[mid])).size();
-		if(l == m && l == (n - SA[mid])){
+		ll mid = (lb+ub)/2;
+		ll ithSuffixSize = s.length() - SA[mid];
+		auto LCP = lcp(p, s, 0, SA[mid]); //todo: make string view
+		ll l = LCP.size();
+		if(l == p.size() && l == ithSuffixSize) //found match until the end of s
+		{
 			res = mid;
 			break;
 		}
-		if( l == (n - SA[mid])
-		|| (l != m && s[SA[mid] + l] < x[l])) 
-			d = mid;
+
+		if( l == ithSuffixSize //suffix is too short, find a longer suffix
+		|| (l != p.size() && s[SA[mid] + l] < p[l])) // pattern match until lth symbol only, check for order with next symbol
+		{
+			lb = mid+1;
+			res = mid;
+		}
 		else
-			f = mid;
+		{
+			ub = mid-1;
+		}
+	}
+	cout << "string:"  << s << endl;
+	cout << "pattern:" << p << endl;
+	if(res < SA.size() -1)
+	{
+		cout << "position between: " << SA[res] << " and " << SA[res+1]  << endl;
+		cout << s.substr(SA[res]) << endl;
+		cout << s.substr(SA[res +1 ]) << endl;
+	}
+	else
+	{
 
 	}
-
 }
 
 //-------------------------------------------------------------------
 
-void SAS()
+void SAS(const string & s, const string &p)
 {
 }
 

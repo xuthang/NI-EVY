@@ -6,16 +6,32 @@
 int main(int argc, char *argv[])
 {
 	auto code = parseInput(argc, argv, cin);
+	string s, p;
 	switch (code)
 	{
 	case CODE::SAA:
-		SAA();
+		if(!(cin >> s))
+		{
+			cerr << "expected input string" << endl;
+			exit(2);
+		}
+		SAA(s);
 		break;
 	case CODE::SASS:
-		SASS();
+		if(!(cin >> s >> p))
+		{
+			cout << "expected input string" << endl;
+			exit(2);
+		}
+		SASS(s, p);
 		break;
 	case CODE::SAS:
-		SAS();
+		if(!(cin >> s >> p))
+		{
+			cout << "expected input string" << endl;
+			exit(2);
+		}
+		SAS(s, p);
 		break;
 	case CODE::TESTS:
 		Tests();
