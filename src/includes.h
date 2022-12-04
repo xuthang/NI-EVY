@@ -3,7 +3,7 @@
 #include <bits/stdc++.h>
 using namespace std;
 
-typedef unsigned ll;
+typedef int ll;
 typedef vector<ll> vll;
 typedef pair<ll, ll> ii;
 typedef vector<ii> vii;
