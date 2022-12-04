@@ -92,17 +92,18 @@ vll createLCP_array(const string &s, const vll &SA)
 	// vll ret(n);
 	// FOR(i, 1, n) ret[i] = LCP_len(s, s, SA[i-1], SA[i]);
 	// assert(ret == lcp);
-	// queue<ii> q;
 
-	// q.push({0, n-1});
-	// while(!q.empty())
-	// {
-	// 	auto [lb, ub] = q.front(); q.pop();
-	// 	ll mid = (lb + ub) /2;
-	// 	deb(mid)
-	// 	ret[n  + mid] = LCP_len(s, s, SA[lb], SA[ub]);
-	// 	if(ub - lb > 2) q.push({lb, mid}), q.push({mid, ub});
-	// }
+	lcp.resize(2*n);
+	queue<ii> q;
+	q.push({0, n-1});
+	while(!q.empty())
+	{
+		auto [lb, ub] = q.front(); q.pop();
+		ll mid = (lb + ub) /2;
+		deb(mid)
+		lcp[n  + mid] = LCP_len(s, s, SA[lb], SA[ub]);
+		if(ub - lb > 2) q.push({lb, mid}), q.push({mid, ub});
+	}
 	return lcp;
 }
 
@@ -110,9 +111,9 @@ vll createLCP_array(const string &s, const vll &SA)
 //require lb >= 0 && ub < s.size()
 ll getLCP(const vll &LCPA, const string &s, ll lb, ll ub)
 {
-	// if(lb + 1 == ub) return LCPA[ub];
-	// ll n = LCPA.size() /2 ;
-	// return LCPA[n + 1+ (lb + ub)/2]; //todo: indexing??
+	if(lb + 1 == ub) return LCPA[ub];
+	ll n = LCPA.size() /2 ;
+	return LCPA[n + (lb + ub)/2]; //todo: indexing??
 
 	auto SA = createSA(s);
 	return LCP_len(s, s, SA[lb], SA[ub]);
@@ -197,7 +198,6 @@ void SAS(const string &s, const string &p)
 	auto SA = createSA(s);
 	auto LCPA = createLCP_array(s, SA);
 	ll d = 0, f = n - 1;
-	ll res = d;
 
 	ll l_d = LCP_len(p, s, 0, SA.front()), l_f = LCP_len(p, s, 0, SA.back());
 	while (d + 1 < f)
@@ -239,7 +239,6 @@ void SAS(const string &s, const string &p)
 			ll Li_len = n - SA[i];
 			if (l == m && l == Li_len) // found exact match
 			{
-				res = i;
 				d = f = i;
 				break;
 			}
