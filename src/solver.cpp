@@ -1,5 +1,6 @@
 #pragma once
 #include "includes.h"
+#include "polachRadixSort.h"
 
 // s string that will searched
 // SA is a suffix array of len s.size()
@@ -49,11 +50,12 @@ vll createSA(const string &s)
 	return suffixes;
 }
 
+//-------------------------------------------------------------------
+
 string lcp(const string &a, const string &b, int aStart, int bStart)
 {
 	int aLen = a.size() - aStart, bLen = b.size() - bStart;
-	FOR(i, 0, min(aLen, bLen))
-	if (a[aStart + i] != b[bStart + i]) a.substr(aStart, i);
+	FOR(i, 0, min(aLen, bLen)) if (a[aStart + i] != b[bStart + i]) a.substr(aStart, i);
 
 	return aLen < bLen ? a.substr(aStart) : b.substr(bStart);
 }
@@ -68,6 +70,8 @@ int LCP_len(const string &a, const string &b, int aStart, int bStart)
 
 	return min(aLen, bLen);
 }
+
+//-------------------------------------------------------------------
 
 vll createLCP_array(const string &s, const vll &SA)
 {
@@ -102,27 +106,8 @@ vll createLCP_array(const string &s, const vll &SA)
 	return lcp;
 }
 
-void LCP_extended(const string &s, ll lb, ll ub, vll &res)
-{
-	if (lb > ub)
-		return;
 
-	ll mid = (lb + ub) / 2;
-	res[s.size() + mid] = LCP_len(s, s, lb, ub);
-	LCP_extended(s, lb, mid, res);
-	LCP_extended(s, mid, ub, res);
-}
-
-vll LCP_extended(const string &s)
-{
-	vll ret(s.size() * 2);
-
-	FOR(i, 1, s.size())
-	ret[i] = LCP_len(s, s, i - 1, i);
-	LCP_extended(s, 0, s.size(), ret);
-	return ret;
-}
-
+//require lb >= 0 && ub < s.size()
 ll getLCP(const vll &LCPA, const string &s, ll lb, ll ub)
 {
 	// if(lb + 1 == ub) return LCPA[ub];
@@ -133,6 +118,7 @@ ll getLCP(const vll &LCPA, const string &s, ll lb, ll ub)
 	return LCP_len(s, s, SA[lb], SA[ub]);
 }
 
+//-------------------------------------------------------------------
 //-------------------------------------------------------------------
 
 void SAA(const string &s)
@@ -164,7 +150,7 @@ void SASS(const string &s, const string &p)
 		}
 
 		if (l == ithSuffixSize								 // suffix is too short, find a longer suffix
-			|| (l != (ll)p.size() && s[SA[mid] + l] < p[l])) // pattern match until lth symbol only, check for order with next symbol
+			|| (l != (ll)p.size() && s[SA[mid] + l] < p[l])) // pattern match until l-th symbol only, check for order with next symbol
 		{
 			lb = mid + 1;
 			res = mid;
@@ -177,6 +163,7 @@ void SASS(const string &s, const string &p)
 
 	cout << "string:" << s << endl;
 	cout << "pattern:" << p << endl;
+	cout << res <<"-th string" << endl;
 	if (foundExactMatch)
 	{
 		cout << "position at: ";
@@ -212,39 +199,68 @@ void SAS(const string &s, const string &p)
 	ll d = 0, f = n - 1;
 	ll res = d;
 
-	ll l_d = 0, l_f = 0;
+	ll l_d = LCP_len(p, s, 0, SA.front()), l_f = LCP_len(p, s, 0, SA.back());
 	while (d + 1 < f)
 	{
-		ll mid = (d + f) / 2;
-		deb(mid);
-		ll lcp_mid_ub = getLCP(LCPA, s, mid, f), lcp_lb_mid = getLCP(LCPA, s, d, mid);
-
-		if (l_d <= lcp_mid_ub && lcp_mid_ub < l_f) // half near UB has better prefix
-			d = mid, l_d = lcp_mid_ub;
-		else if (l_d <= l_f && l_f < lcp_mid_ub) // mid has better LCP than UB
-			f = mid;
-		else if (l_f <= lcp_lb_mid && lcp_lb_mid < l_d)
-			f = mid, l_f = lcp_lb_mid;
-		else if (l_f <= l_d && l_d < lcp_lb_mid)
-			d = mid;
+		ll i = (d + f) / 2;
+		deb(i);
+		deb(s.substr(SA[d]));
+		deb(s.substr(SA[i]));
+		deb(s.substr(SA[f]));
+		ll lcp_if = getLCP(LCPA, s, i, f), lcp_di = getLCP(LCPA, s, d, i);
+		deb(lcp_di);
+		deb(lcp_if);
+		if (l_d <= lcp_if && lcp_if < l_f) // half near UB has better prefix
+		{
+			cerr << "case a)" << endl;
+			d = i, l_d = lcp_if;
+		}
+		else if (l_d <= l_f && l_f < lcp_if) // mid has better LCP than UB
+		{
+			cerr << "case b)" << endl;
+			f = i;
+		}
+		else if (l_f <= lcp_di && lcp_di < l_d)
+		{
+			cerr << "case a) 2" << endl;
+			f = i, l_f = lcp_di;
+		}
+		else if (l_f <= l_d && l_d < lcp_di)
+		{
+			cerr << "case b) 2" << endl;
+			d = i;
+		}
 		else
 		{
+			cerr << "case c)" << endl;
+
 			ll l = max(l_d, l_f);
-			l += LCP_len(p, s, l, SA[mid] + l);
-			ll Li_len = n - SA[mid];
+			l += LCP_len(p, s, l, SA[i] + l);
+			ll Li_len = n - SA[i];
 			if (l == m && l == Li_len) // found exact match
 			{
-				res = mid;
+				res = i;
+				d = f = i;
 				break;
 			}
-			else if (l == Li_len || (l != m && s[SA[mid] + l] < p[l]))
-				d = mid, l_d = l;
+			else if (l == Li_len || (l != m && s[SA[i] + l] < p[l]))
+			{
+				cerr << "c 1" << endl;
+				d = i, l_d = l;
+			}
 			else
-				f = mid, l_f = l;
+			{
+				cerr << "c 2" << endl;
+				f = i, l_f = l;
+			}
 		}
 	}
-	deb(d);
-	deb(f);
+	cout << "string: "<< s << endl;
+	cout << "pattern: " << p << endl;
 
+	cout << "found match at " << d << " " << f << endl;
+	cout << "corresponding strings are:" << endl;
+	cout << s.substr(SA[d]) << endl;
+	cout << s.substr(SA[f]) << endl;
 	// todo: process result
 }
