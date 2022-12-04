@@ -172,13 +172,17 @@ int *lcpArray(unsigned char *s, int n, int *sa)
 		}
 	return lcp;
 }
-
+#include <string>
+#include <iostream>
 int main(int argc, char *argv[])
 {
-	if (argc < 2)
-		return 1;
+	// if (argc < 2)
+	// 	return 1;
 
-	char *s = argv[1];
+	// char *s = argv[1];
+	std::string str; std::cin >> str;
+	char * s = str.data();
+
 	int n = strlen(s);
 	printf("Length: %3u\n", n);
 	printf("Index:  ");
