@@ -9,7 +9,10 @@ auto getCompareFunction(const string &s)
 {
 	return [&](ll a, ll b)
 	{
+		// goes until end of shorter string and tries to find first not matching pair
 		FOR(i, 0, min(s.size() - a, s.size() - b)) if (s[a + i] != s[b + i]) return s[a + i] < s[b + i];
+
+		// shorter string is prefix of the longer one, s_a < s_b iff |s_a| < |s_b|
 		return s.size() - a < s.size() - b;
 	};
 }
@@ -40,12 +43,43 @@ void printSA(const string &s, const vll &SA, const vll &lcpArray)
 
 //-------------------------------------------------------------------
 
+const ll SType = 1, LType = 0;
+vll getLSTypes(const string &s)
+{
+	vll ret(s.size());
+	ret[s.size() -1] = LType;
+	for(ll i = s.size()-2; i>=0; i--) ret[i] = s[i] != s[i+1]?  s[i] < s[i+1] : ret[i+1];
+
+	FOR(i, 0, s.size()) cerr << i << "\t";
+	cerr << endl;
+
+	FOR(i, 0, s.size()) cerr << (ret[i] == SType? "S" : "L") << "\t";
+	cerr << endl;
+
+	return ret;
+}
+
+vll lms(const string &s, const vll &LSTypeA)
+{
+	vll ret;
+	FOR(i, 1, s.size())
+	{
+		if(LSTypeA[i-1] == LType && LSTypeA[i] == SType) ret.push_back(i);
+	}
+
+	FOR(i, 0, ret.size()) cerr << i << " " << ret[i] << endl;
+	return ret;
+}
+
 vll createSA(const string &s)
 {
+	auto LSTypeA = getLSTypes(s);
+	auto lmsA = lms(s,LSTypeA);
+
 	// todo: make linear
 	vll suffixes(s.size());
 	iota(suffixes.begin(), suffixes.end(), 0);
-	auto cmp = getCompareFunction(s);
+	auto cmp = getCompareFunction(s); //takes index of starting position of suffix
 	sort(suffixes.begin(), suffixes.end(), cmp);
 	return suffixes;
 }
@@ -65,9 +99,11 @@ string lcp(const string &a, const string &b) { return lcp(a, b, 0, 0); }
 int LCP_len(const string &a, const string &b, int aStart, int bStart)
 {
 	int aLen = a.size() - aStart, bLen = b.size() - bStart;
-	FOR(i, 0, min(aLen, bLen))
-	if (a[aStart + i] != b[bStart + i]) return i;
 
+	//returns position of 1st not matching position, iterates until the end of the shorter string
+	FOR(i, 0, min(aLen, bLen)) if (a[aStart + i] != b[bStart + i]) return i;
+
+	// one of the suffixes is prefix of the other, return the shorter one
 	return min(aLen, bLen);
 }
 
@@ -79,6 +115,7 @@ vll createLCP_array(const string &s, const vll &SA)
 	vll lcp(n), rank(n);
 	FOR(i, 0, n) rank[SA[i]] = i;
 
+	//implementation is kasai's algorithm
 	ll h = 0;
 	FOR(i, 0, n)
 	if (rank[i] > 0)
@@ -96,11 +133,11 @@ vll createLCP_array(const string &s, const vll &SA)
 	lcp.resize(2*n);
 	queue<ii> q;
 	q.push({0, n-1});
+	//extend of the 2nd half of the array to contain values of binary search tree
 	while(!q.empty())
 	{
 		auto [lb, ub] = q.front(); q.pop();
 		ll mid = (lb + ub) /2;
-		deb(mid)
 		lcp[n  + mid] = LCP_len(s, s, SA[lb], SA[ub]);
 		if(ub - lb > 2) q.push({lb, mid}), q.push({mid, ub});
 	}
@@ -112,11 +149,10 @@ vll createLCP_array(const string &s, const vll &SA)
 ll getLCP(const vll &LCPA, const string &s, ll lb, ll ub)
 {
 	if(lb + 1 == ub) return LCPA[ub];
-	ll n = LCPA.size() /2 ;
-	return LCPA[n + (lb + ub)/2]; //todo: indexing??
 
-	auto SA = createSA(s);
-	return LCP_len(s, s, SA[lb], SA[ub]);
+	//value was precomputed
+	ll n = LCPA.size() / 2 ;
+	return LCPA[n + (lb + ub)/2]; //todo: indexing??
 }
 
 //-------------------------------------------------------------------
@@ -261,5 +297,4 @@ void SAS(const string &s, const string &p)
 	cout << "corresponding strings are:" << endl;
 	cout << s.substr(SA[d]) << endl;
 	cout << s.substr(SA[f]) << endl;
-	// todo: process result
 }
