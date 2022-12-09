@@ -37,8 +37,8 @@ void printSA(const string &s, const vll &SA, const vll &lcpArray)
 	FOR(i, 0, lcpArray.size()) cout << lcpArray[i] << " ";
 	cout << endl;
 
-	// FOR(i, 0, s.size())
-	// 	cout << i<< " " <<s.substr(SA[i]) << endl;
+	FOR(i, 0, s.size())
+		cerr << i<< " " <<s.substr(SA[i]) << endl;
 }
 
 //-------------------------------------------------------------------
@@ -131,15 +131,21 @@ vll createLCP_array(const string &s, const vll &SA)
 	// assert(ret == lcp);
 
 	lcp.resize(2*n);
-	queue<ii> q;
+	stack<ii> q;
 	q.push({0, n-1});
 	//extend of the 2nd half of the array to contain values of binary search tree
 	while(!q.empty())
 	{
-		auto [lb, ub] = q.front(); q.pop();
+		auto [lb, ub] = q.top(); q.pop();
 		ll mid = (lb + ub) /2;
 		lcp[n  + mid] = LCP_len(s, s, SA[lb], SA[ub]);
-		if(ub - lb > 2) q.push({lb, mid}), q.push({mid, ub});
+		
+		cerr << mid << " | " << lb << " " << ub << " | " << lcp[n + mid] << " | " << s.substr(SA[lb]) << ", " << s.substr(SA[ub]) << endl;
+
+		if(mid - lb >= 2)
+		 	q.push({lb, mid});
+		if(ub - mid >= 2)
+			q.push({mid, ub});
 	}
 	return lcp;
 }
